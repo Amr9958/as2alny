@@ -1,8 +1,15 @@
-import 'package:as2lny_app/features/home/presentation/view/widget/custom_text_field.dart';
-import 'package:as2lny_app/features/home/presentation/view/widget/send_massages.dart';
 import 'package:flutter/material.dart';
-import '../../../../../core/utils/api_service.dart';
+
+import 'chat_bubble_users.dart';
+import 'chat_bubble_bot.dart';
+import 'custom_text_field.dart';
+import 'send_massages.dart';
 import '../../../../../core/utils/gemini_service.dart';
+
+enum MessageType {
+  bot,
+  user,
+}
 
 class ChatScreenBody extends StatefulWidget {
   const ChatScreenBody({super.key});
@@ -18,60 +25,78 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
 
   bool _isLoading = false;
 
-  Future<void> _sendMessage(String message) async {
+  @override
+  void initState() {
+    super.initState();
+    // _sendMessage('Hello', MessageType.bot);
+  }
+
+  Future<void> _sendMessage(String message, MessageType messageType) async {
     if (message.isEmpty) return;
 
-    setState(() {
-      _messages.add("You: $message");
+    String prefix = messageType == MessageType.user ? "You: " : "Bot: ";
 
+    setState(() {
+      _messages.add("$prefix$message");
       _isLoading = true;
     });
 
     final response = await GeminiService.getGeminiResponse(message);
 
     setState(() {
-      _messages.add("Bot: ${response ?? 'Error'}");
-
+      _messages.add(" ${response ?? 'Error'}");
       _isLoading = false;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('As2lny App'),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(_messages[index]),
-                );
-              },
-            ),
+    return Column(
+      children: [
+        Expanded(
+          child: ListView.builder(
+            itemCount: _messages.length,
+            itemBuilder: (context, index) {
+              final message = _messages[index];
+              final messageType = message.startsWith('You')
+                  ? MessageType.user
+                  : MessageType.bot;
+
+              switch (messageType) {
+                case MessageType.user:
+                  return ChatBubbleUsers(
+                    message: message,
+                  );
+                case MessageType.bot:
+                  return ChatBubbleBot(
+                    message: message,
+                  );
+                default:
+                  return ChatBubbleUsers(
+                    message: message,
+                  );
+              }
+            },
           ),
-          if (_isLoading) const CircularProgressIndicator(),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                CustomTextField(controller: _controller),
-                SendMassages(
-                  onPressed: () {
-                    final message = _controller.text;
-                    _controller.clear();
-                    _sendMessage(message);
-                  },
-                ),
-              ],
-            ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            children: [
+              CustomTextField(controller: _controller),
+              _isLoading
+                  ? const CircularProgressIndicator()
+                  : SendMassages(
+                      onPressed: () {
+                        final message = _controller.text;
+                        _controller.clear();
+                        _sendMessage(message, MessageType.user);
+                      },
+                    ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

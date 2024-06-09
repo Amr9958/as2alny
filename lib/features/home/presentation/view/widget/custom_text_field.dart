@@ -14,6 +14,7 @@ class CustomTextField extends StatelessWidget {
       child: TextField(
         controller: _controller,
         decoration: const InputDecoration(
+          border: OutlineInputBorder(),
           labelText: 'Enter your message',
         ),
       ),
