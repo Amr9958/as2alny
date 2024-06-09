@@ -5,7 +5,8 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 import 'dart:io';
 
 void main() {
-  runApp(ChatGPTApp());
+  runApp(ChatGPTApp()); 
+  
 }
 
 class ChatGPTApp extends StatelessWidget {
