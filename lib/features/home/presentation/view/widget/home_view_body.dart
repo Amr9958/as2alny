@@ -1,3 +1,10 @@
+<<<<<<< HEAD
+=======
+import 'dart:developer';
+
+import 'package:as2lny_app/features/home/presentation/view/widget/custom_text_field.dart';
+import 'package:as2lny_app/features/home/presentation/view/widget/send_massages.dart';
+>>>>>>> 4e9222b389653380030add88362f04357741962b
 import 'package:flutter/material.dart';
 
 import 'chat_bubble_users.dart';
@@ -40,13 +47,17 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
       _messages.add("$prefix$message");
       _isLoading = true;
     });
+    log('$_messages');
 
     final response = await GeminiService.getGeminiResponse(message);
 
     setState(() {
       _messages.add(" ${response ?? 'Error'}");
       _isLoading = false;
+
+      log('$_isLoading');
     });
+    log('$_messages');
   }
 
   @override
