@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:as2lny_app/features/home/presentation/view/widget/custom_text_field.dart';
 import 'package:as2lny_app/features/home/presentation/view/widget/send_massages.dart';
 import 'package:flutter/material.dart';
@@ -26,6 +28,7 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
 
       _isLoading = true;
     });
+    log('$_messages');
 
     final response = await GeminiService.getGeminiResponse(message);
 
@@ -33,7 +36,10 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
       _messages.add("Bot: ${response ?? 'Error'}");
 
       _isLoading = false;
+
+      log('$_isLoading');
     });
+    log('$_messages');
   }
 
   @override
