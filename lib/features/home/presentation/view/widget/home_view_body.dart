@@ -1,11 +1,8 @@
-import 'dart:io';
-
 import 'package:as2lny_app/features/home/presentation/view/widget/custom_text_field.dart';
 import 'package:as2lny_app/features/home/presentation/view/widget/send_massages.dart';
 import 'package:flutter/material.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
-
-import '../../../../../core/constant.dart';
+import '../../../../../core/utils/api_service.dart';
+import '../../../../../core/utils/gemini_service.dart';
 
 class ChatScreenBody extends StatefulWidget {
   const ChatScreenBody({super.key});
@@ -30,7 +27,7 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
       _isLoading = true;
     });
 
-    final response = await _getGeminiResponse(message);
+    final response = await GeminiService.getGeminiResponse(message);
 
     setState(() {
       _messages.add("Bot: ${response ?? 'Error'}");
@@ -39,31 +36,11 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
     });
   }
 
-  Future<String?> _getGeminiResponse(String message) async {
-    final apiKey = Platform.environment[kApiKey];
-
-    final model = GenerativeModel(model: kGeminiV, apiKey: apiKey!);
-
-    final content = [Content.text(_controller.text)];
-
-    try {
-      final response = await model.generateContent(content);
-
-      print('the response is ' + '${response.text}');
-
-      return response.text;
-    } catch (e) {
-      print('Error: $e');
-    }
-
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('As2alny App'),
+        title: const Text('As2lny App'),
       ),
       body: Column(
         children: [

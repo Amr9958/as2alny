@@ -12,7 +12,7 @@ class ChatGPTApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'as2alny App',
+      title: 'as2lny App',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
