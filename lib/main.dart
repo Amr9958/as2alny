@@ -45,6 +45,8 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {
       _messages.add("Bot: ${response ?? 'Error'}");
       _isLoading = false;
+
+      
     });
   }
 
