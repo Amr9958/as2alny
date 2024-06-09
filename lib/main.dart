@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:google_generative_ai/google_generative_ai.dart';
+import 'dart:io';
 
-void main() => runApp(ChatGPTApp());
+void main() {
+  runApp(ChatGPTApp());
+}
 
 class ChatGPTApp extends StatelessWidget {
   @override
@@ -36,7 +40,7 @@ class _ChatScreenState extends State<ChatScreen> {
       _isLoading = true;
     });
 
-    final response = await _getChatGPTResponse(message);
+    final response = await _getGiminiResponse(message);
 
     setState(() {
       _messages.add("Bot: ${response ?? 'Error'}");
@@ -44,35 +48,27 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-  Future<String?> _getChatGPTResponse(String message) async {
-    final apiKey = 'your-openai-api-key'; // Replace with your OpenAI API key
-    final url = Uri.parse(
-        'https://api.openai.com/v1/engines/davinci-codex/completions');
-    final headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $apiKey',
-    };
-    final body = jsonEncode({
-      'prompt': message,
-      'max_tokens': 150,
-    });
+  Future<String?> _getGiminiResponse(String message) async {
+    final apiKey =
+        Platform.environment['AIzaSyD0TDsH61VwRdjNGkfZ4BAOLYIZ72n7-lY{\rtf1}'];
+    final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey!);
+    final content = [Content.text(_controller.text)];
 
     try {
-      final response = await http.post(url, headers: headers, body: body);
-      final responseBody = jsonDecode(response.body);
-
-      return responseBody['choices'][0]['text'].trim();
+      final response = await model.generateContent(content);
+      print('the response is '+'${response.text}');
+      return response.text;
     } catch (e) {
       print('Error: $e');
-      return null;
     }
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('As2alny App'),
+        title: const Text('As2alny App'),
       ),
       body: Column(
         children: [
@@ -86,7 +82,7 @@ class _ChatScreenState extends State<ChatScreen> {
               },
             ),
           ),
-          if (_isLoading) CircularProgressIndicator(),
+          if (_isLoading) const CircularProgressIndicator(),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Row(
@@ -94,13 +90,13 @@ class _ChatScreenState extends State<ChatScreen> {
                 Expanded(
                   child: TextField(
                     controller: _controller,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Enter your message',
                     ),
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.send),
+                  icon: const Icon(Icons.send),
                   onPressed: () {
                     final message = _controller.text;
                     _controller.clear();
