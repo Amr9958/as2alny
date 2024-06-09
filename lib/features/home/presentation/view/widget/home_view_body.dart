@@ -1,7 +1,11 @@
 import 'dart:io';
 
+import 'package:as2lny_app/features/home/presentation/view/widget/custom_text_field.dart';
+import 'package:as2lny_app/features/home/presentation/view/widget/send_massages.dart';
 import 'package:flutter/material.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
+
+import '../../../../../core/constant.dart';
 
 class ChatScreenBody extends StatefulWidget {
   const ChatScreenBody({super.key});
@@ -36,10 +40,9 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
   }
 
   Future<String?> _getGeminiResponse(String message) async {
-    final apiKey =
-        Platform.environment['AIzaSyD0TDsH61VwRdjNGkfZ4BAOLYIZ72n7-lY{\rtf1}'];
+    final apiKey = Platform.environment[kApiKey];
 
-    final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey!);
+    final model = GenerativeModel(model: kGeminiV, apiKey: apiKey!);
 
     final content = [Content.text(_controller.text)];
 
@@ -79,21 +82,11 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
             padding: const EdgeInsets.all(8.0),
             child: Row(
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: const InputDecoration(
-                      labelText: 'Enter your message',
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.send),
+                CustomTextField(controller: _controller),
+                SendMassages(
                   onPressed: () {
                     final message = _controller.text;
-
                     _controller.clear();
-
                     _sendMessage(message);
                   },
                 ),
