@@ -3,6 +3,9 @@ import 'package:as2lny_app/features/home/presentation/view/widget/send_massages.
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
 import '../../../../../core/utils/image_packer.dart';
 import 'chat_bubble_users.dart';
@@ -24,19 +27,46 @@ class ChatScreenBody extends StatefulWidget {
 
 class _ChatScreenBodyState extends State<ChatScreenBody> {
   final TextEditingController _controller = TextEditingController();
-
+  final SpeechToText _speechToText = SpeechToText();
   final List<String> _messages = [];
-
+  bool _speechEnabled = false;
+  String _lastWords = "";
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
+    listenForPermissions();
+    _initSpeech(); // تهيئة SpeechToText
     _sendMessage('Hello', MessageType.bot);
   }
 
+  void listenForPermissions() async {
+    final status = await Permission.microphone.status;
+    switch (status) {
+      case PermissionStatus.denied:
+        requestForPermission();
+        break;
+      case PermissionStatus.granted:
+        break;
+      case PermissionStatus.limited:
+        break;
+      case PermissionStatus.permanentlyDenied:
+        break;
+      case PermissionStatus.restricted:
+        break;
+      case PermissionStatus.provisional:
+        break;
+    }
+  }
+
+  Future<void> requestForPermission() async {
+    await Permission.microphone.request();
+  }
+
   Future<void> _sendMessage(String message, MessageType messageType) async {
-    if (message.isEmpty) return;
+    if (message.trim().isEmpty)
+      return; // تعديل هذا السطر للتأكد من أن الرسالة ليست فارغة
 
     String prefix = messageType == MessageType.user ? "You: " : "Bot: ";
 
@@ -91,10 +121,10 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
                 controller: _controller,
                 onPressed: () {
                   ImagePackerHelper.pickImage(ImageSource.gallery)
-                      .then((value) {
-                    if (value != null) {
+                      .then((image) {
+                    if (image != null) {
                       setState(() {
-                        _controller.text = value.path;
+                        _controller.text = image.path;
                       });
                     }
                   });
@@ -106,13 +136,54 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
                       onPressed: () {
                         final message = _controller.text;
                         _controller.clear();
+                        _lastWords = "";
                         _sendMessage(message, MessageType.user);
                       },
                     ),
+              FloatingActionButton.small(
+                onPressed:
+                    // If not yet listening for speech start, otherwise stop
+                    _speechToText.isNotListening
+                        ? _startListening
+                        : _stopListening,
+                tooltip: 'Listen',
+                backgroundColor: Colors.blueGrey,
+                child: Icon(
+                    _speechToText.isNotListening ? Icons.mic_off : Icons.mic),
+              )
             ],
           ),
         ),
       ],
     );
+  }
+
+  void _initSpeech() async {
+    _speechEnabled = await _speechToText.initialize();
+  }
+
+  /// Each time to start a speech recognition session
+  void _startListening() async {
+    await _speechToText.listen(
+      onResult: _onSpeechResult,
+      listenFor: const Duration(seconds: 30),
+      localeId: "ar_ar",
+      cancelOnError: false,
+      partialResults: false,
+      listenMode: ListenMode.confirmation,
+    );
+    setState(() {});
+  }
+
+  void _stopListening() async {
+    await _speechToText.stop();
+    setState(() {});
+  }
+
+  void _onSpeechResult(SpeechRecognitionResult result) {
+    setState(() {
+      _lastWords = "$_lastWords${result.recognizedWords} ";
+      _controller.text = _lastWords;
+    });
   }
 }
