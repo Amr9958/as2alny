@@ -1,16 +1,13 @@
-<<<<<<< HEAD
-=======
-import 'dart:developer';
-
 import 'package:as2lny_app/features/home/presentation/view/widget/custom_text_field.dart';
 import 'package:as2lny_app/features/home/presentation/view/widget/send_massages.dart';
->>>>>>> 4e9222b389653380030add88362f04357741962b
-import 'package:flutter/material.dart';
 
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+
+import '../../../../../core/utils/image_packer.dart';
 import 'chat_bubble_users.dart';
 import 'chat_bubble_bot.dart';
-import 'custom_text_field.dart';
-import 'send_massages.dart';
+
 import '../../../../../core/utils/gemini_service.dart';
 
 enum MessageType {
@@ -35,7 +32,7 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
   @override
   void initState() {
     super.initState();
-    // _sendMessage('Hello', MessageType.bot);
+    _sendMessage('Hello', MessageType.bot);
   }
 
   Future<void> _sendMessage(String message, MessageType messageType) async {
@@ -47,17 +44,13 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
       _messages.add("$prefix$message");
       _isLoading = true;
     });
-    log('$_messages');
 
     final response = await GeminiService.getGeminiResponse(message);
 
     setState(() {
       _messages.add(" ${response ?? 'Error'}");
       _isLoading = false;
-
-      log('$_isLoading');
     });
-    log('$_messages');
   }
 
   @override
@@ -94,7 +87,19 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
           padding: const EdgeInsets.all(8.0),
           child: Row(
             children: [
-              CustomTextField(controller: _controller),
+              CustomTextField(
+                controller: _controller,
+                onPressed: () {
+                  ImagePackerHelper.pickImage(ImageSource.gallery)
+                      .then((value) {
+                    if (value != null) {
+                      setState(() {
+                        _controller.text = value.path;
+                      });
+                    }
+                  });
+                },
+              ),
               _isLoading
                   ? const CircularProgressIndicator()
                   : SendMassages(
