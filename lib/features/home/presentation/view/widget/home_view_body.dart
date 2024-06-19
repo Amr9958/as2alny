@@ -2,6 +2,7 @@ import 'package:as2lny_app/features/home/presentation/view/widget/custom_text_fi
 import 'package:as2lny_app/features/home/presentation/view/widget/send_massages.dart';
 
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
@@ -12,6 +13,9 @@ import 'chat_bubble_users.dart';
 import 'chat_bubble_bot.dart';
 
 import '../../../../../core/utils/gemini_service.dart';
+
+List<String> messages = [];
+  final TextEditingController controller = TextEditingController();
 
 enum MessageType {
   bot,
@@ -26,9 +30,10 @@ class ChatScreenBody extends StatefulWidget {
 }
 
 class _ChatScreenBodyState extends State<ChatScreenBody> {
-  final TextEditingController _controller = TextEditingController();
+  //init the hive box
+  var box = Hive.box('messagesBox');
+  /////////////////
   final SpeechToText _speechToText = SpeechToText();
-  final List<String> _messages = [];
   bool _speechEnabled = false;
   String _lastWords = "";
   bool _isLoading = false;
@@ -64,6 +69,16 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
     await Permission.microphone.request();
   }
 
+  void _loadMessages() async {
+    var box = Hive.box('messagesBox');
+    setState(() {
+      messages = box.values.map((msg) {
+        String prefix = msg['type'] == 'user' ? "You: " : "Bot: ";
+        return "$prefix${msg['message']}";
+      }).toList();
+    });
+  }
+
   Future<void> _sendMessage(String message, MessageType messageType) async {
     if (message.trim().isEmpty)
       return; // تعديل هذا السطر للتأكد من أن الرسالة ليست فارغة
@@ -71,15 +86,19 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
     String prefix = messageType == MessageType.user ? "You: " : "Bot: ";
 
     setState(() {
-      _messages.add("$prefix$message");
+      messages.add("$prefix$message");
       _isLoading = true;
     });
 
     final response = await GeminiService.getGeminiResponse(message);
 
     setState(() {
-      _messages.add(" ${response ?? 'Error'}");
+      messages.add(" ${response ?? 'Error'}");
       _isLoading = false;
+    });
+    box.add({
+      "message": message,
+      "type": messageType == MessageType.user ? "user" : "bot"
     });
   }
 
@@ -89,9 +108,9 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
       children: [
         Expanded(
           child: ListView.builder(
-            itemCount: _messages.length,
+            itemCount: messages.length,
             itemBuilder: (context, index) {
-              final message = _messages[index];
+              final message = messages[index];
               final messageType = message.startsWith('You')
                   ? MessageType.user
                   : MessageType.bot;
@@ -118,13 +137,13 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
           child: Row(
             children: [
               CustomTextField(
-                controller: _controller,
+                controller: controller,
                 onPressed: () {
                   ImagePackerHelper.pickImage(ImageSource.gallery)
                       .then((image) {
                     if (image != null) {
                       setState(() {
-                        _controller.text = image.path;
+                        controller.text = image.path;
                       });
                     }
                   });
@@ -134,8 +153,8 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
                   ? const CircularProgressIndicator()
                   : SendMassages(
                       onPressed: () {
-                        final message = _controller.text;
-                        _controller.clear();
+                        final message = controller.text;
+                        controller.clear();
                         _lastWords = "";
                         _sendMessage(message, MessageType.user);
                       },
@@ -183,7 +202,7 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
   void _onSpeechResult(SpeechRecognitionResult result) {
     setState(() {
       _lastWords = "$_lastWords${result.recognizedWords} ";
-      _controller.text = _lastWords;
+      controller.text = _lastWords;
     });
   }
 }
