@@ -54,7 +54,8 @@ class _ChatScreenBodyState extends State<ChatScreenBody> {
     super.initState();
     listenForPermissions();
     _initSpeech();
-    context.read<ChatCubit>().addMessage('Hello', 'bot');
+    // context.read<ChatCubit>().addMessage('Hello', 'bot');
+    //To do
   }
 
   void listenForPermissions() async {
