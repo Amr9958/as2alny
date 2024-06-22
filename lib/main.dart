@@ -24,6 +24,7 @@ class ChatGPTApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         title: 'As2lny App',
         theme: ThemeData(
           primarySwatch: Colors.blue,

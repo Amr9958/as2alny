@@ -3,7 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive/hive.dart';
 
 class ChatCubit extends Cubit<ChatState> {
-  ChatCubit() : super(ChatState(messages: [], isLoading: false, selectedMessages: []));
+  ChatCubit()
+      : super(ChatState(messages: [], isLoading: false, selectedMessages: []));
 
   void addMessage(String message, String type) {
     final newMessage = {"message": message, "type": type};
@@ -15,7 +16,10 @@ class ChatCubit extends Cubit<ChatState> {
     // Update state
     final updatedMessages = List<Map<String, dynamic>>.from(state.messages)
       ..add(newMessage);
-    emit(ChatState(messages: updatedMessages, isLoading: state.isLoading, selectedMessages: state.selectedMessages));
+    emit(ChatState(
+        messages: updatedMessages,
+        isLoading: state.isLoading,
+        selectedMessages: state.selectedMessages));
   }
 
   List<Map<String, dynamic>> getUserMessages() {
@@ -30,20 +34,45 @@ class ChatCubit extends Cubit<ChatState> {
     final box = Hive.box('messagesBox');
     box.clear();
 
-    emit(ChatState(messages: [], isLoading: state.isLoading, selectedMessages: []));
+    emit(ChatState(
+        messages: [], isLoading: state.isLoading, selectedMessages: []));
   }
 
   void setLoading(bool isLoading) {
-    emit(ChatState(messages: state.messages, isLoading: isLoading, selectedMessages: state.selectedMessages));
+    emit(ChatState(
+        messages: state.messages,
+        isLoading: isLoading,
+        selectedMessages: state.selectedMessages));
   }
 
   void selectMessagePair(int index) {
     final box = Hive.box('messagesBox');
     final userMessage = Map<String, dynamic>.from(box.getAt(index * 2) as Map);
-    final botMessage = Map<String, dynamic>.from(box.getAt(index * 2 + 1) as Map);
-    emit(ChatState(messages: state.messages, isLoading: state.isLoading, selectedMessages: [userMessage, botMessage]));
+    final botMessage =
+        Map<String, dynamic>.from(box.getAt(index * 2 + 1) as Map);
+    emit(ChatState(
+        messages: state.messages,
+        isLoading: state.isLoading,
+        selectedMessages: [userMessage, botMessage]));
   }
-    void clearSelectedMessages() {
-    emit(ChatState(messages: state.messages, isLoading: state.isLoading, selectedMessages: []));
+
+  void clearSelectedMessages() {
+    emit(ChatState(
+        messages: state.messages,
+        isLoading: state.isLoading,
+        selectedMessages: []));
+  }
+
+  void deleteMessage(int index) {
+    final box = Hive.box('messagesBox');
+    box.deleteAt(index * 2); // delete user message
+    box.deleteAt(index *
+        2); // delete bot message (index remains the same after deletion)
+    emit(ChatState(
+      messages: List<Map<String, dynamic>>.from(
+          box.values.cast<Map>().map((e) => Map<String, dynamic>.from(e))),
+      isLoading: false,
+      selectedMessages: [],
+    ));
   }
 }

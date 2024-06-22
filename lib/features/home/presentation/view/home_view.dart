@@ -30,20 +30,22 @@ class ChatDrawer extends StatelessWidget {
     return Drawer(
       child: Column(
         children: [
-          const SizedBox(
-            height: 150,
-            child: DrawerHeader(
-              margin: EdgeInsets.all(8),
-              padding: EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.blue,
-              ),
-              child: Center(
-                child: Text(
-                  'Saved Messages',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
+          SafeArea(
+            child: SizedBox(
+              height: 100,
+              child: Container(
+                margin: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  color: Colors.blue,
+                ),
+                child: const Center(
+                  child: Text(
+                    'As2lny Questions',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                    ),
                   ),
                 ),
               ),
@@ -55,7 +57,7 @@ class ChatDrawer extends StatelessWidget {
                 // مسح قائمة الرسائل والصندوق
                 context.read<ChatCubit>().clearMessages();
               },
-              child: Text('Clear'),
+              child: const Text('Clear'),
             ),
           ),
           Expanded(
@@ -66,22 +68,42 @@ class ChatDrawer extends StatelessWidget {
                   itemCount: userMessages.length,
                   itemBuilder: (context, index) {
                     final userMessage = userMessages[index];
-                    return GestureDetector(
-                        onLongPress: () {
-                          _showOptions(context, index, userMessage);
+                    return ListTile(
+                      trailing: PopupMenuButton<int>(
+                        onSelected: (value) {
+                          if (value == 0) {
+                            _shareMessage(context, index);
+                          } else if (value == 1) {
+                            _deleteMessage(context, index);
+                          }
                         },
-                        child: ListTile(
-                          title: Text(
-                            "${userMessage['message']}",
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 0,
+                            child: Text('Share'),
                           ),
-                          onTap: () {
-                            Navigator.pop(context);
-                            context.read<ChatCubit>().selectMessagePair(index);
-                          },
-                          onLongPress: () {},
-                        ));
+                          const PopupMenuItem(
+                            value: 1,
+                            child: Text('Delete'),
+                          ),
+                        ],
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.more_vert),
+                          ],
+                        ),
+                      ),
+                      title: Text(
+                        "${userMessage['message']}",
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        context.read<ChatCubit>().selectMessagePair(index);
+                      },
+                    );
                   },
                 );
               },
@@ -101,15 +123,15 @@ class ChatDrawer extends StatelessWidget {
           child: Wrap(
             children: <Widget>[
               ListTile(
-                leading: Icon(Icons.share),
-                title: Text('Share'),
+                leading: const Icon(Icons.share),
+                title: const Text('Share'),
                 onTap: () {
                   _shareMessage(context, index);
                 },
               ),
               ListTile(
-                leading: Icon(Icons.delete),
-                title: Text('Delete'),
+                leading: const Icon(Icons.delete),
+                title: const Text('Delete'),
                 onTap: () {
                   _deleteMessage(context, index);
                 },
@@ -130,14 +152,6 @@ class ChatDrawer extends StatelessWidget {
   }
 
   void _deleteMessage(BuildContext context, int index) {
-    final box = Hive.box('messagesBox');
-    box.deleteAt(index * 2); // delete user message
-    box.deleteAt(index *
-        2); // delete bot message (index remains the same after deletion)
-    context.read<ChatCubit>().emit(ChatState(
-        messages: List<Map<String, dynamic>>.from(box.values),
-        isLoading: false,
-        selectedMessages: []));
-    Navigator.pop(context);
+    context.read<ChatCubit>().deleteMessage(index);
   }
 }
